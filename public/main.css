@@ -1,0 +1,203 @@
+*{
+    margin: 0;
+    padding: 0;   
+}
+
+#main{
+    background-color: #2c2b2b;
+    width: 100%;
+    height: 100vh;
+}
+.wrapper{
+    position: absolute;
+    width: 70%;
+    height: 740px;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.myContainer{
+    position: absolute;
+    width: 100%;
+    height: 700px;
+    display: grid;
+    grid-template-columns: 1fr 7fr;
+    grid-template-rows: 2fr 1fr;
+    margin: 0 auto;
+    background-color: #eeeeee;
+    border-radius: 8px;
+}
+
+.popup{
+    width: 300px;
+    height: 300px;
+    background-color: #ffffff;
+    border-radius: 8px;
+    position: absolute;
+    top: 30%;
+    left: 41%;
+    text-align: center;
+}
+
+.login{
+    margin-top:55px;
+}
+
+.login > h2{
+    margin-bottom: 20px;
+}
+
+.login > input{  
+    margin-bottom: 10px;
+}
+
+.userMenu{
+    width: 100%;
+    height: 100%;
+    border-radius: 5px;
+}
+
+.userList{
+    overflow-y: scroll;
+    width: 100%;
+    height: 43vh;
+}
+
+.user{
+    box-shadow: 3px 3px 5px gray;
+    border-radius: 5px;
+    margin-bottom: 5px;
+}
+
+.user.my{
+    background-color: #cac8c8;
+}
+
+.profile{
+    
+    border-radius: 5px;
+}
+
+.chat{
+    display: grid;
+    grid-template-rows: 25px 5fr 55px;
+    border-radius: 5px;
+}
+
+.input{
+    display: grid;grid-template-columns: 5fr 1fr;
+}
+
+.title{
+    background-color: #cfcfcf;
+    border-radius: 5px;
+    height: 22px;
+    margin-bottom: 5px;
+}
+
+.msgBox{
+    overflow-y: scroll;
+    height: 18vh;
+    width: 100%;
+}
+
+.msg{
+    border-radius: 5px;
+    background-color: #d1d1d1;
+    margin-bottom: 5px;
+}
+
+.msg.my{
+    background-color: #b1b0b0;
+}
+
+.createRooms{
+    width: 300px;
+    height: 300px;
+    background-color: #ffffff;
+    border-radius: 8px;
+    position: absolute;
+    top: 30%;
+    left: 41%;
+    text-align: center;
+    box-shadow: 3px 3px 5px gray;
+}
+
+#roomInput{
+    width: 80%;
+    margin: 0 auto;
+    margin-bottom: 10px;
+}
+
+#selectGame{
+    width: 80%;
+    margin: 0 auto;
+    margin-bottom: 10px;
+}
+
+.createRooms > .move{
+    margin-top: 45px
+}
+
+.tr-enter-active, .tr-leave-active{
+    transition: opacity 0.5s;
+}
+
+.tr-enter, .tr-leave-to{
+    opacity: 0;
+}
+
+.roomList{
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
+    grid-template-rows: 1fr 1fr 1fr 1fr 1fr;
+    grid-gap: 5px;
+    overflow-y: scroll;
+    height: 43vh;
+}
+
+.roomList > *{
+    border: 1px solid #b4b4b4;
+}
+
+.room{
+    width: 100%;
+    height: 100%;
+    border-radius: 5px;
+    background-color: #dadada;
+}
+
+.mainChating{
+    background-color: #2c2b2b;
+    width: 100%;
+    height: 100vh;
+}
+
+.chating{
+    height: 700px;
+    display: grid;
+    grid-template-rows: 25px 5fr 55px;
+    border-radius: 5px;
+}
+
+.chating > .input{
+    display: grid;
+    grid-template-columns: 5fr 1fr;
+}
+
+.chating > .msgBox{
+    overflow-y: scroll;
+    height: 64vh;
+    width: 100%;
+}
+
+.chating > .msg{
+    border-radius: 5px;
+    background-color: #d1d1d1;
+    margin-bottom: 5px;
+}
+
+.chating > .msg.my{
+    background-color: #b1b0b0;
+}
