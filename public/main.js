@@ -9,7 +9,8 @@ window.onload = function () {
             this.socket.on('login-ok', data => { this.isLogin = true; });
             this.socket.on('awesome', data => {this.chatList.push(data); this.scroll();} );
             this.socket.emit('room');
-            this.socket.on('viewRoom', data=>{this.roomList = data});
+            this.socket.on('view-room', data=>{this.roomList = data});
+            this.socket.on('game', ()=> {this.game = false;});
         },
         data: {
             game:false,
@@ -44,7 +45,8 @@ window.onload = function () {
                 if(this.nickName === ""){
                     return;
                 }else{
-                    const msgBox = document.querySelector(".main .msgBox");
+                    if(this.game === true) return;
+                    const msgBox = document.querySelector("#main .msgBox");
                     let scrollInterval = setInterval(() => {
                     msgBox.scrollTop = msgBox.scrollHeight;
                     clearInterval(scrollInterval);
@@ -63,14 +65,21 @@ window.onload = function () {
                 this.roomName = "";
                 this.roomPassword = "";
             },
-            inRoom(roomPassword, roomName, selectGame){
+            inRoom(roomPassword, roomName, selectGame, roomId){
                 if(roomPassword !== ""){
                     alert("비밀번호를 입력해주세요.")
                     return;
                 }else{
-                    alert("방에 들어가겠습니까?");
-                    this.game = true;
-                    this.socket.emit('room-in', {nickName:this.nickName, roomName:roomName, id:this.socket.id, selectGame:selectGame});
+                    if (confirm("방에 들어가시겠습니까?") == true){
+                        let room = this.roomList.find(x=> x.roomId === roomId);
+                        if(room.user === room.max) alert("인원이 꽉찼습니다.");
+                        else{
+                            this.game = true;
+                            this.socket.emit('room-in', {nickName:this.nickName, roomName:roomName, id:this.socket.id, selectGame:selectGame, roomId : roomId});
+                        }   
+                    }else{ 
+                        return;
+                    }
                 }
             }
         }
@@ -95,18 +104,72 @@ window.onload = function () {
         methods:{
             sendMsg(){
                 if (this.msg === "" || this.msg.length >= 500) return;
-                this.socket.emit('chating-msg', {msg:this.msg, roomName:this.roomInUser[0].roomName});
+                this.socket.emit('chating-msg', {msg:this.msg, roomId:this.roomInUser[0].roomId});
                 this.msg = "";
             },
             scroll() {
                 if(this.nickName === ""){
                     return;
                 }else{
+                    if(this.isChating === false) return;
                     const msgBox = document.querySelector(".mainChating .msgBox");
                     let scrollInterval = setInterval(() => {
                     msgBox.scrollTop = msgBox.scrollHeight;
                     clearInterval(scrollInterval);
                 }, 10);
+                }
+            },
+            roomOut(){
+                if (confirm("정말 나가시겠습니까?") == true){
+                    this.isChating = false;
+                    this.socket.emit('room-out', {id:this.socket.id, roomId:this.roomInUser[0].roomId });
+                }else{ 
+                    return;
+                }
+            }
+        }
+    })
+
+    const mafia = new Vue({
+        el:".mainMafia",
+        mounted(){
+            this.socket = socket;
+            this.socket.on('room-user', data => {this.roomInUser = data; this.roomName = this.roomInUser.roomName;});
+            this.socket.on('mafia-in-room', () =>{this.isMafia = true});
+            this.socket.on('chating-awesome', data=> {this.chatList.push(data); this.scroll();});
+        },
+        data:{
+            socket: null,
+            roomInUser:[],
+            roomName:'',
+            isMafia:false,
+            msg:'',
+            chatList:[]
+        },
+        methods:{
+            sendMsg(){
+                if (this.msg === "" || this.msg.length >= 500) return;
+                this.socket.emit('chating-msg', {msg:this.msg, roomId:this.roomInUser[0].roomId});
+                this.msg = "";
+            },
+            scroll() {
+                if(this.nickName === ""){
+                    return;
+                }else{
+                    if(this.isChating === false) return;
+                    const msgBox = document.querySelector(".mainChating .msgBox");
+                    let scrollInterval = setInterval(() => {
+                    msgBox.scrollTop = msgBox.scrollHeight;
+                    clearInterval(scrollInterval);
+                }, 10);
+                }
+            },
+            roomOut(){
+                if (confirm("정말 나가시겠습니까?") == true){
+                    this.isChating = false;
+                    this.socket.emit('room-out', {id:this.socket.id, roomId:this.roomInUser[0].roomId });
+                }else{ 
+                    return;
                 }
             }
         }

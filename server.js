@@ -33,6 +33,7 @@ app.get('/chating', (req, res)=>{
 let userList = []; //로그인한 유저들을 저장하는 배열
 let roomList = []; //방 목록
 let roomInUser = [];//방에 들어간 유저 목록
+let roomId = 0;
 io.on("connect", socket => {
     console.log(socket.id + "연결");
     
@@ -44,11 +45,15 @@ io.on("connect", socket => {
 
     socket.on('disconnect', ()=>{
         let idx = userList.findIndex(x => x.id === socket.id);
-        if(idx < 0) return;
-        let user = userList.splice(idx, 1);
-        console.log(user);
+        let idx2 = roomInUser.findIndex(x => x.id === socket.id);
+        if(idx < 0 || idx2 < 0) return;
+        console.log(userList.splice(idx, 1));
         console.log("접속종료");
         io.emit('user-list', userList);
+        roomInUser.splice(idx2, 1);
+        roomMax = roomList.find(x => x.id === socket.id);
+        roomMax.user--;
+        roomUser(roomMax.roomId);
     });
 
     socket.on('chat-msg', data =>{
@@ -58,44 +63,56 @@ io.on("connect", socket => {
     });
 
     socket.on('createRoom', data =>{
-        roomList.push(data);
-        roomInUser.push({nickName:data.nickName, roomName:data.roomName, id:data.id, selectGame:data.selectGame});
-        socket.join(data.roomName);
-        io.emit('viewRoom', roomList);
-        let roomMax = roomList.find(x => x.roomName === data.roomName);
-        let a = [];
-        for(let i =0; i < roomInUser.length; i++){
-            if(roomInUser[i].roomName === roomMax.roomName){
-               a.push(roomInUser[i]);
-            }
-        }
+        roomList.push({roomName:data.roomName, roomPassword:data.roomPassword, selectGame:data.selectGame, max:data.max, user:data.user, nickName:data.nickName, id:data.id, roomId : roomId});
+        roomInUser.push({nickName:data.nickName, roomName:data.roomName, id:data.id, selectGame:data.selectGame, roomId:roomId});
+        socket.join(roomId);
+        io.emit('view-room', roomList);
+        let roomMax = roomList.find(x => x.roomId === roomId);
         if(data.selectGame === 'chating') socket.emit('chating-in-room');
-        io.to(data.roomName).emit('room-user', a);
+        else if(data.selectGame === 'mafia') socket.emit('mafia-in-room');
+        roomUser(roomMax.roomId);
+        roomId++;
     });
 
     socket.on('room', ()=>{
-        io.emit('viewRoom', roomList);
+        io.emit('view-room', roomList);
     });
 
     socket.on('room-in', data=>{
         roomInUser.push(data);
-        let roomMax = roomList.find(x => x.roomName === data.roomName);
+        let roomMax = roomList.find(x => x.roomId === data.roomId);
         roomMax.user++;
-        io.emit('viewRoom', roomList);
-        socket.join(data.roomName);
-        let a = [];
+        io.emit('view-room', roomList);
+        socket.join(data.roomId);
+        if(data.selectGame === 'chating') socket.emit('chating-in-room');
+        else if(data.selectGame === 'mafia') socket.emit('mafia-in-room');
+        roomUser(roomMax.roomId);
+    });
+
+    socket.on('room-out', data=>{
+        roomInUser.splice(roomInUser.findIndex(x => x.id === data.id), 1);
+        let roomMax = roomList.find(x => x.roomId === data.roomId);
+        roomMax.user--;
+        socket.leave(data.roomId);
+        roomUser(roomMax.id);
+        if(roomMax.user === 0) roomList.splice(roomList.findIndex(x=> x.id === data.roomId), 1);
+        socket.emit('game');
+        io.emit('view-room', roomList);
+    });
+
+    let roomUser = data =>{
+        let a = []; 
         for(let i =0; i < roomInUser.length; i++){
-            if(roomInUser[i].roomName === roomMax.roomName){
+            if(roomInUser[i].roomId === data){
                a.push(roomInUser[i]);
             }
         }
-        if(data.selectGame === 'chating') socket.emit('chating-in-room');
-        io.to(data.roomName).emit('room-user', a);
-    });
+        io.to(data).emit('room-user', a);
+    };
 
     socket.on('chating-msg', data=>{
         let sendUser = userList.find(x => x.id === socket.id);
-        io.to(data.roomName).emit('chating-awesome', {id:sendUser.id, nickName:sendUser.nickName, msg:data.msg});
+        io.to(data.roomId).emit('chating-awesome', {id:sendUser.id, nickName:sendUser.nickName, msg:data.msg});
     });
 });
 
