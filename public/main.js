@@ -34,6 +34,10 @@ window.onload = function () {
                     alert("닉네임에 공백은 넣을 수 없습니다.");
                     return;
                 } 
+                if(this.userList.findIndex(x => x.nickName === this.nickName) >= 0){
+                    alert("중복되는 닉네임 입니다.");
+                    return;
+                }
                 this.socket.emit('login', this.nickName);
             },
             sendMsg() {
@@ -60,7 +64,7 @@ window.onload = function () {
                     return;   
                 }
                 this.game = true;
-                this.socket.emit('createRoom', {roomName:this.roomName, roomPassword:this.roomPassword, selectGame:selectGame, max:4, user:1, nickName:this.nickName, id:this.socket.id});
+                this.socket.emit('createRoom', {roomName:this.roomName, roomPassword:this.roomPassword, selectGame:selectGame, max:4, user:1, nickName:this.nickName, id:this.socket.id, ready:false});
                 this.room = false;
                 this.roomName = "";
                 this.roomPassword = "";
@@ -75,7 +79,7 @@ window.onload = function () {
                         if(room.user === room.max) alert("인원이 꽉찼습니다.");
                         else{
                             this.game = true;
-                            this.socket.emit('room-in', {nickName:this.nickName, roomName:roomName, id:this.socket.id, selectGame:selectGame, roomId : roomId});
+                            this.socket.emit('room-in', {nickName:this.nickName, roomName:roomName, id:this.socket.id, selectGame:selectGame, roomId : roomId, ready:false});
                         }   
                     }else{ 
                         return;
@@ -84,19 +88,18 @@ window.onload = function () {
             }
         }
     })
-
+//---------------------------------------------------------------------------------------------------------------------------------------
     const chating = new Vue({
         el:".mainChating",
         mounted(){
             this.socket = socket;
-            this.socket.on('room-user', data => {this.roomInUser = data; this.roomName = this.roomInUser.roomName;});
+            this.socket.on('room-user', data => {this.roomInUser = data;});
             this.socket.on('chating-in-room', () =>{this.isChating = true});
             this.socket.on('chating-awesome', data=> {this.chatList.push(data); this.scroll();});
         },
         data:{
             socket: null,
             roomInUser:[],
-            roomName:'',
             isChating:false,
             msg:'',
             chatList:[]
@@ -129,19 +132,18 @@ window.onload = function () {
             }
         }
     })
-
+//---------------------------------------------------------------------------------------------------------------------------------------
     const mafia = new Vue({
         el:".mainMafia",
         mounted(){
             this.socket = socket;
-            this.socket.on('room-user', data => {this.roomInUser = data; this.roomName = this.roomInUser.roomName;});
+            this.socket.on('room-user', data => {this.roomInUser = data;});
             this.socket.on('mafia-in-room', () =>{this.isMafia = true});
             this.socket.on('chating-awesome', data=> {this.chatList.push(data); this.scroll();});
         },
         data:{
             socket: null,
             roomInUser:[],
-            roomName:'',
             isMafia:false,
             msg:'',
             chatList:[]
@@ -156,8 +158,8 @@ window.onload = function () {
                 if(this.nickName === ""){
                     return;
                 }else{
-                    if(this.isChating === false) return;
-                    const msgBox = document.querySelector(".mainChating .msgBox");
+                    if(this.isMafia === false) return;
+                    const msgBox = document.querySelector(".mainMafia .msgBoxM");
                     let scrollInterval = setInterval(() => {
                     msgBox.scrollTop = msgBox.scrollHeight;
                     clearInterval(scrollInterval);
@@ -166,7 +168,7 @@ window.onload = function () {
             },
             roomOut(){
                 if (confirm("정말 나가시겠습니까?") == true){
-                    this.isChating = false;
+                    this.isMafia = false;
                     this.socket.emit('room-out', {id:this.socket.id, roomId:this.roomInUser[0].roomId });
                 }else{ 
                     return;

@@ -45,15 +45,9 @@ io.on("connect", socket => {
 
     socket.on('disconnect', ()=>{
         let idx = userList.findIndex(x => x.id === socket.id);
-        let idx2 = roomInUser.findIndex(x => x.id === socket.id);
-        if(idx < 0 || idx2 < 0) return;
+        if(idx < 0) return;
         console.log(userList.splice(idx, 1));
-        console.log("접속종료");
         io.emit('user-list', userList);
-        roomInUser.splice(idx2, 1);
-        roomMax = roomList.find(x => x.id === socket.id);
-        roomMax.user--;
-        roomUser(roomMax.roomId);
     });
 
     socket.on('chat-msg', data =>{
@@ -64,7 +58,7 @@ io.on("connect", socket => {
 
     socket.on('createRoom', data =>{
         roomList.push({roomName:data.roomName, roomPassword:data.roomPassword, selectGame:data.selectGame, max:data.max, user:data.user, nickName:data.nickName, id:data.id, roomId : roomId});
-        roomInUser.push({nickName:data.nickName, roomName:data.roomName, id:data.id, selectGame:data.selectGame, roomId:roomId});
+        roomInUser.push({nickName:data.nickName, roomName:data.roomName, id:data.id, selectGame:data.selectGame, roomId:roomId, ready:data.ready});
         socket.join(roomId);
         io.emit('view-room', roomList);
         let roomMax = roomList.find(x => x.roomId === roomId);
@@ -80,22 +74,19 @@ io.on("connect", socket => {
 
     socket.on('room-in', data=>{
         roomInUser.push(data);
-        let roomMax = roomList.find(x => x.roomId === data.roomId);
-        roomMax.user++;
-        io.emit('view-room', roomList);
         socket.join(data.roomId);
         if(data.selectGame === 'chating') socket.emit('chating-in-room');
         else if(data.selectGame === 'mafia') socket.emit('mafia-in-room');
-        roomUser(roomMax.roomId);
+        roomMax({check:true, id:data.roomId});
+        roomUser(data.roomId);
+        io.emit('view-room', roomList);
     });
 
     socket.on('room-out', data=>{
         roomInUser.splice(roomInUser.findIndex(x => x.id === data.id), 1);
-        let roomMax = roomList.find(x => x.roomId === data.roomId);
-        roomMax.user--;
         socket.leave(data.roomId);
-        roomUser(roomMax.id);
-        if(roomMax.user === 0) roomList.splice(roomList.findIndex(x=> x.id === data.roomId), 1);
+        roomUser(data.id);
+        roomMax({check:false, id:data.roomId});
         socket.emit('game');
         io.emit('view-room', roomList);
     });
@@ -108,6 +99,16 @@ io.on("connect", socket => {
             }
         }
         io.to(data).emit('room-user', a);
+    };
+
+    let roomMax = data =>{
+        let roomMax = roomList.find(x => x.roomId === data.id);
+        if(data.check){
+            roomMax.user++;
+        }else{
+            roomMax.user--;
+            if(roomMax.user === 0) roomList.splice(roomList.findIndex(x=> x.id === data.id), 1);
+        }
     };
 
     socket.on('chating-msg', data=>{
