@@ -77,12 +77,12 @@
 }
 
 .userWait{
-    background-color: rgb(92, 60, 60);
+    background-color: rgb(255, 106, 106);
     border-radius: 5px;
     display: grid;
-    grid-template-rows: 2fr 1fr;
+    grid-template-rows: 2fr 1fr 25px;
     opacity: 1;
-    color: white;
+    color: black;
 }
 
 .userWait> i{
@@ -94,8 +94,12 @@
     text-align: center;
 }
 
+.userWait > .ready{
+    text-align: center;
+}
+
 .userWait.my{
-    background-color: rgb(182, 17, 17);
+    background-color: rgb(255, 255, 255);
 }
 
 .msgWait{

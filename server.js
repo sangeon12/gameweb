@@ -85,7 +85,7 @@ io.on("connect", socket => {
     socket.on('room-out', data=>{
         roomInUser.splice(roomInUser.findIndex(x => x.id === data.id), 1);
         socket.leave(data.roomId);
-        roomUser(data.id);
+        roomUser(data.roomId);
         roomMax({check:false, id:data.roomId});
         socket.emit('game');
         io.emit('view-room', roomList);
@@ -93,12 +93,19 @@ io.on("connect", socket => {
 
     let roomUser = data =>{
         let a = []; 
+        let host = '';
         for(let i =0; i < roomInUser.length; i++){
             if(roomInUser[i].roomId === data){
                a.push(roomInUser[i]);
             }
         }
-        io.to(data).emit('room-user', a);
+        for(let i =0; i < roomList.length; i++){
+            if(roomList[i].roomId === data){
+                console.log(roomList[i].id);
+               host = roomList[i].id;
+            }
+        }
+        io.to(data).emit('room-user', {roomInUser:a, host :host});
     };
 
     let roomMax = data =>{
@@ -114,6 +121,14 @@ io.on("connect", socket => {
     socket.on('chating-msg', data=>{
         let sendUser = userList.find(x => x.id === socket.id);
         io.to(data.roomId).emit('chating-awesome', {id:sendUser.id, nickName:sendUser.nickName, msg:data.msg});
+    });
+
+    socket.on('ready', data=>{
+        if(data){
+            
+        }else{
+            
+        }
     });
 });
 

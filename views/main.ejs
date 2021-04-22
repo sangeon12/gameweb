@@ -151,8 +151,8 @@
             <img class="blood-img" src="img/blood.png" alt="img1">
             <div class="waitingRoom">
                 <div class="gameMenu">
-                    <button type="button" class="btn btn-primary">게임시작</button>
-                    <button type="button" class="btn btn-primary">준비하기</button>
+                    <button type="button" class="btn btn-primary" v-if="socket.id === host" @click="gameStart">게임시작</button>
+                    <button type="button" class="btn btn-primary" v-if="socket.id !== host" @click="ready">준비하기</button>
                     <button type="button" class="btn btn-danger" @click="roomOut">나가기</button>
                 </div>
 
@@ -172,6 +172,8 @@
                                 <div class="userWait" v-for="user in roomInUser" :class="{my:socket.id === user.id}"><i
                                         class="fas fa-user"></i>
                                     <h4>{{user.nickName}}</h4>
+                                    <div class="ready" v-if="user.ready">준비완료</div>
+                                    <div class="ready" v-else>준비안됌</div>
                                 </div>
                             </div>
                         </div>

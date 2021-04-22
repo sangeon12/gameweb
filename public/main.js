@@ -93,7 +93,7 @@ window.onload = function () {
         el:".mainChating",
         mounted(){
             this.socket = socket;
-            this.socket.on('room-user', data => {this.roomInUser = data;});
+            this.socket.on('room-user', data => {this.roomInUser = data.roomInUser;});
             this.socket.on('chating-in-room', () =>{this.isChating = true});
             this.socket.on('chating-awesome', data=> {this.chatList.push(data); this.scroll();});
         },
@@ -137,7 +137,7 @@ window.onload = function () {
         el:".mainMafia",
         mounted(){
             this.socket = socket;
-            this.socket.on('room-user', data => {this.roomInUser = data;});
+            this.socket.on('room-user', data => {this.roomInUser = data.roomInUser; this.host = data.host;});
             this.socket.on('mafia-in-room', () =>{this.isMafia = true});
             this.socket.on('chating-awesome', data=> {this.chatList.push(data); this.scroll();});
         },
@@ -146,7 +146,9 @@ window.onload = function () {
             roomInUser:[],
             isMafia:false,
             msg:'',
-            chatList:[]
+            chatList:[],
+            host:'',
+            readyBtn:false
         },
         methods:{
             sendMsg(){
@@ -173,6 +175,15 @@ window.onload = function () {
                 }else{ 
                     return;
                 }
+            },
+            gameStart(){
+                if(!this.roomInUser.length < 4){
+                    alert("인원수가 적습니다."); 
+                    return;
+                } 
+            },
+            ready(){
+                this.socket.emit('ready', this.ready);
             }
         }
     })
