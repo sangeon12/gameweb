@@ -17,172 +17,215 @@
 </head>
 
 <body>
-    <div id="main" v-if="!game">
-        <transition name="tr">
-            <div class="wrapper" v-if="isLogin">
+    <transition name="tr">
+        <div id="main" v-if="!game">
+            <div class="popup" v-if="!isLogin">
+                <div class="login">
+                    <h1>Welcome</h1>
+                    <h2>Please log in</h2>
+                    <input type="text" class="form-control" placeholder="Username" aria-label="Username"
+                        aria-describedby="addon-wrapping" v-model="nickName" @keyDown.enter="login">
+                </div>
+                <button type="button" class="btn btn-secondary" id="submit" @click="login">로그인</button>
+            </div>
+
+            <transition name="tr">
+                <div class="wrapper" v-if="isLogin">
+                    <div class="menu">
+                        <button type="button" class="btn btn-primary" @click="room = !room">방만들기</button>
+                        <button type="button" class="btn btn-danger">방찾기</button>
+                    </div>
+    
+                    <div class="myContainer">
+                        <div class="userMenu">
+                            <div class="title">유저리스트</div>
+                            <div class="userList">
+                                <div class="user" v-for="user in userList" :class="{my:socket.id === user.id}">
+                                    {{user.nickName}}</div>
+                            </div>
+                        </div>
+    
+                        <div class="rooms">
+                            <div class="title">방목록</div>
+                            <div class="roomList">
+                                <div class="room" v-for="room in roomList"
+                                    @click="inRoom(room.roomPassword, room.roomName, room.selectGame, room.roomId)">
+                                    <div class="roomName">{{room.roomName}}({{room.roomId}})</div>
+                                    <div class="roomGame">{{room.selectGame}}</div>
+                                    <div class="roomUser">{{room.user}}/{{room.max}}</div>
+                                </div>
+                            </div>
+                        </div>
+    
+                        <div class="profile">
+                            <div class="title">내정보</div>
+                            <div class="my" v-for="my in userList" v-if="my.id === socket.id">{{my.nickName}}</div>
+                        </div>
+    
+                        <div class="chat">
+                            <div class="title">채팅창</div>
+                            <div class="msgBox">
+                                <div class="msg" v-for="chat in chatList" :class="{my:chat.id === socket.id}">
+                                    {{chat.nickName}} : {{chat.msg}}</div>
+                            </div>
+    
+                            <div class="input">
+                                <input type="text" class="form-control" id="exampleFormControlInput1" placeholder="message"
+                                    v-model="msg" @keyDown.enter="sendMsg">
+                                <button type="button" class="btn btn-success" @click="sendMsg">보내기</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </transition>
+    
+            <transition name="tr">
+                <div class="createRooms" v-if="room">
+                    <div class="move">
+                        <h4>방 만들기</h4>
+                        <input type="text" id="roomInput" class="form-control" placeholder="Room Name"
+                            aria-label="Room Name" aria-describedby="basic-addon1" v-model="roomName">
+                        <input type="text" id="roomInput" class="form-control" placeholder="Password" aria-label="Password"
+                            aria-describedby="basic-addon1" v-model="roomPassword">
+                        <select class="form-control" id="selectGame" aria-label="Default select example">
+                            <option selected value="">게임 하나를 선택해주세요.</option>
+                            <option value="chating">채팅방</option>
+                            <option value="ending">끝말잇기</option>
+                            <option value="ai">Computer VS player(끝말잇기)</option>
+                            <option value="mafia">마피아 게임</option>
+                        </select>
+                        <div class="moveBtn">
+                            <button type="button" class="btn btn-warning" @click="createRoom">만들기</button>
+                            <button type="button" class="btn btn-info" @click="room = !room">취소</button>
+                        </div>
+                    </div>
+                </div>
+            </transition>
+        </div>
+        </div>
+    </transition>
+    <!-- --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- -->
+    <div class="mainChating" v-if="isChating">
+        <div class="chating">
+            <div class="wrapper">
                 <div class="menu">
-                    <button type="button" class="btn btn-primary" @click="room = !room">방만들기</button>
-                    <button type="button" class="btn btn-danger">방찾기</button>
+                    <button type="button" class="btn btn-danger" @click="roomOut">나가기</button>
                 </div>
 
                 <div class="myContainer">
                     <div class="userMenu">
                         <div class="title">유저리스트</div>
                         <div class="userList">
-                            <div class="user" v-for="user in userList" :class="{my:socket.id === user.id}">
+                            <div class="user" v-for="user in roomInUser" :class="{my:socket.id === user.id}">
                                 {{user.nickName}}</div>
                         </div>
-                    </div>
 
-                    <div class="rooms">
-                        <div class="title">방목록</div>
-                        <div class="roomList">
-                            <div class="room" v-for="room in roomList"
-                                @click="inRoom(room.roomPassword, room.roomName, room.selectGame, room.roomId)">
-                                <div class="roomName">{{room.roomName}}</div>
-                                <div class="roomGame">{{room.selectGame}}</div>
-                                <div class="roomUser">{{room.user}}/{{room.max}}</div>
-                            </div>
+                        <div class="profile">
+                            <div class="title">방정보</div>
+                            <div class="my" v-for="my in roomInUser" v-if="socket.id === my.id">
+                                {{my.nickName}}/{{my.roomName}}</div>
                         </div>
                     </div>
 
-                    <div class="profile">
-                        <div class="title">내정보</div>
-                        <div class="my" v-for="my in userList" v-if="my.id === socket.id">{{my.nickName}}</div>
-                    </div>
-
-                    <div class="chat">
+                    <div class="chating">
                         <div class="title">채팅창</div>
                         <div class="msgBox">
                             <div class="msg" v-for="chat in chatList" :class="{my:chat.id === socket.id}">
                                 {{chat.nickName}} : {{chat.msg}}</div>
                         </div>
-
                         <div class="input">
                             <input type="text" class="form-control" id="exampleFormControlInput1" placeholder="message"
                                 v-model="msg" @keyDown.enter="sendMsg">
                             <button type="button" class="btn btn-success" @click="sendMsg">보내기</button>
                         </div>
                     </div>
+
                 </div>
             </div>
-        </transition>
+        </div>
+    </div>
+    <!-- --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- -->
+    <div class="mainMafia" v-if="isMafia">
+
+        <div class="waitingRoom" v-if="!gameStart">
+            <div class="gameMenu">
+                <button type="button" class="btn btn-primary" v-if="socket.id === host" @click="gameStart2">게임시작</button>
+                <button type="button" class="btn btn-primary" v-if="socket.id !== host" @click="ready">준비하기</button>
+                <button type="button" class="btn btn-danger" @click="roomOut">나가기</button>
+            </div>
+
+            <div class="myContainerM">
+                <div class="userM">
+                    <div class="profileM">
+                        <div class="titleM">방정보</div>
+                        <div class="roomListM">
+                            <div class="mafiaRoom" v-for="my in roomInUser" v-if="socket.id === my.id">{{my.roomName}}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="userMenuM">
+                        <div class="titleM">유저리스트</div>
+                        <div class="userListM">
+                            <div class="userWait" v-for="user in roomInUser" :class="{my:socket.id === user.id}"><i
+                                    class="fas fa-user"></i>
+                                <h4>{{user.nickName}}</h4>
+                                <div class="ready" v-show="user.id !== host" v-if="user.ready"><i
+                                        class="fas fa-check"></i></div>
+                                <div class="ready" v-show="user.id !== host" v-else><i class="fas fa-times"></i></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="chatingM">
+                    <div class="titleM">채팅창</div>
+                    <div class="msgBoxM">
+                        <div class="msgWait" v-for="chat in chatList" :class="{my:chat.id === socket.id}">
+                            {{chat.nickName}} : {{chat.msg}}</div>
+                    </div>
+                    <div class="input">
+                        <input type="text" class="form-control" id="exampleFormControlInput1" placeholder="message"
+                            v-model="msg" @keyDown.enter="sendMsg">
+                        <button type="button" class="btn btn-success" @click="sendMsg">보내기</button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
 
         <transition name="tr">
-            <div class="createRooms" v-if="room">
-                <div class="move">
-                    <h4>방 만들기</h4>
-                    <input type="text" id="roomInput" class="form-control" placeholder="Room Name"
-                        aria-label="Room Name" aria-describedby="basic-addon1" v-model="roomName">
-                    <input type="text" id="roomInput" class="form-control" placeholder="Password" aria-label="Password"
-                        aria-describedby="basic-addon1" v-model="roomPassword">
-                    <select class="form-control" id="selectGame" aria-label="Default select example">
-                        <option selected value="">게임 하나를 선택해주세요.</option>
-                        <option value="chating">채팅방</option>
-                        <option value="ending">끝말잇기</option>
-                        <option value="ai">Computer VS player(끝말잇기)</option>
-                        <option value="mafia">마피아 게임</option>
-                    </select>
-                    <div class="moveBtn">
-                        <button type="button" class="btn btn-warning" @click="createRoom">만들기</button>
-                        <button type="button" class="btn btn-info" @click="room = !room">취소</button>
-                    </div>
-                </div>
-            </div>
-        </transition>
-
-        <div class="popup" v-if="!isLogin">
-            <div class="login">
-                <h1>Welcome</h1>
-                <h2>Please log in</h2>
-                <input type="text" class="form-control" placeholder="Username" aria-label="Username"
-                    aria-describedby="addon-wrapping" v-model="nickName" @keyDown.enter="login">
-            </div>
-            <button type="button" class="btn btn-secondary" id="submit" @click="login">로그인</button>
-        </div>
-    </div>
-    </div>
-    <!-- --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- -->
-    <transition name="tr">
-        <div class="mainChating" v-if="isChating">
-            <div class="chating">
-                <div class="wrapper">
-                    <div class="menu">
-                        <button type="button" class="btn btn-danger" @click="roomOut">나가기</button>
-                    </div>
-
-                    <div class="myContainer">
-                        <div class="userMenu">
-                            <div class="title">유저리스트</div>
-                            <div class="userList">
-                                <div class="user" v-for="user in roomInUser" :class="{my:socket.id === user.id}">
-                                    {{user.nickName}}</div>
-                            </div>
-
-                            <div class="profile">
-                                <div class="title">방정보</div>
-                                <div class="my" v-for="my in roomInUser" v-if="socket.id === my.id">
-                                    {{my.nickName}}/{{my.roomName}}</div>
-                            </div>
-                        </div>
-
-                        <div class="chating">
-                            <div class="title">채팅창</div>
-                            <div class="msgBox">
-                                <div class="msg" v-for="chat in chatList" :class="{my:chat.id === socket.id}">
-                                    {{chat.nickName}} : {{chat.msg}}</div>
-                            </div>
-                            <div class="input">
-                                <input type="text" class="form-control" id="exampleFormControlInput1"
-                                    placeholder="message" v-model="msg" @keyDown.enter="sendMsg">
-                                <button type="button" class="btn btn-success" @click="sendMsg">보내기</button>
-                            </div>
-                        </div>
-
-                    </div>
-                </div>
-            </div>
-        </div>
-    </transition>
-    <!-- --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- -->
-    <transition name="tr">
-        <div class="mainMafia" v-if="isMafia">
-            <img class="mafia-img" src="img/backgroundImg.jpg" alt="img1">
-            <img class="blood-img" src="img/blood.png" alt="img1">
-            <div class="waitingRoom">
+            <div class="mafiaPlayRoom" v-if="gameStart">
                 <div class="gameMenu">
-                    <button type="button" class="btn btn-primary" v-if="socket.id === host" @click="gameStart">게임시작</button>
-                    <button type="button" class="btn btn-primary" v-if="socket.id !== host" @click="ready">준비하기</button>
-                    <button type="button" class="btn btn-danger" @click="roomOut">나가기</button>
+                    <button type="button" class="btn btn-danger" @click="roomOut">게임중지</button>
                 </div>
 
-                <div class="myContainerM">
-                    <div class="userM">
-                        <div class="profileM">
-                            <div class="titleM">방정보</div>
-                            <div class="roomListM">
-                                <div class="mafiaRoom" v-for="my in roomInUser" v-if="socket.id === my.id">{{my.roomName}}
-                                </div>
-                            </div>
-                        </div>
+            <div class="mafiaGame">
+                    
+                <div class="mafiaInUser">
+                    <div class="titleM">유저리스트</div>
+                    
+                    <div class="mafiaInUserList">
+                        <div class="mafiaPlayUser" v-for="user in roomInUser" v-on:click="clickEvent(user.nickName)"><i class="fas fa-user"></i>{{user.nickName}}</div>
+                    </div>
+                </div>
+    
 
-                        <div class="userMenuM">
-                            <div class="titleM">유저리스트</div>
-                            <div class="userListM">
-                                <div class="userWait" v-for="user in roomInUser" :class="{my:socket.id === user.id}"><i
-                                        class="fas fa-user"></i>
-                                    <h4>{{user.nickName}}</h4>
-                                    <div class="ready" v-if="user.ready">준비완료</div>
-                                    <div class="ready" v-else>준비안됌</div>
-                                </div>
-                            </div>
+                <div class="mafiaPlay">
+
+                    <div class="guide">
+                        <div class="titleM">가이드</div>
+                        <div class="gameGuide">
+                            {{guide}}   남은시간 : {{time}}
                         </div>
                     </div>
 
-                    <div class="chatingM">
+                    <div class="mafiaPlayChating">
                         <div class="titleM">채팅창</div>
-                        <div class="msgBoxM">
-                            <div class="msgWait" v-for="chat in chatList" :class="{my:chat.id === socket.id}">
+                        <div class="playMsgBoxM">
+                            <div class="msgWait" v-for="chat in chatList" v-if="!chat.nickName === 'system'" :class="{my:chat.id === socket.id}">
+                                {{chat.nickName}} : {{chat.msg}}</div>
+                            <div class="msgWait" v-for="chat in chatList" v-if="chat.nickName === 'system'" :class="{system:chat.nickName === 'system'}">
                                 {{chat.nickName}} : {{chat.msg}}</div>
                         </div>
                         <div class="input">
@@ -191,15 +234,11 @@
                             <button type="button" class="btn btn-success" @click="sendMsg">보내기</button>
                         </div>
                     </div>
-
                 </div>
             </div>
-
-            <div class="mafiaGame">
-
             </div>
-        </div>
-    </transition>
+        </transition>
+    </div>
 </body>
 
 </html>

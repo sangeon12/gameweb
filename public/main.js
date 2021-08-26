@@ -63,11 +63,12 @@ window.onload = function () {
                     alert("방 이름 또는 게임을 선택해주세요.");
                     return;   
                 }
-                this.game = true;
                 this.socket.emit('createRoom', {roomName:this.roomName, roomPassword:this.roomPassword, selectGame:selectGame, max:4, user:1, nickName:this.nickName, id:this.socket.id, ready:false});
+                this.game = true;
                 this.room = false;
                 this.roomName = "";
                 this.roomPassword = "";
+                this.chatList = [];
             },
             inRoom(roomPassword, roomName, selectGame, roomId){
                 if(roomPassword !== ""){
@@ -78,8 +79,9 @@ window.onload = function () {
                         let room = this.roomList.find(x=> x.roomId === roomId);
                         if(room.user === room.max) alert("인원이 꽉찼습니다.");
                         else{
-                            this.game = true;
                             this.socket.emit('room-in', {nickName:this.nickName, roomName:roomName, id:this.socket.id, selectGame:selectGame, roomId : roomId, ready:false});
+                            this.game = true;
+                            this.chatList = [];
                         }   
                     }else{ 
                         return;
@@ -111,20 +113,18 @@ window.onload = function () {
                 this.msg = "";
             },
             scroll() {
-                if(this.nickName === ""){
-                    return;
-                }else{
-                    if(this.isChating === false) return;
+                
+                if(this.isChating === false) return;
                     const msgBox = document.querySelector(".mainChating .msgBox");
                     let scrollInterval = setInterval(() => {
                     msgBox.scrollTop = msgBox.scrollHeight;
                     clearInterval(scrollInterval);
                 }, 10);
-                }
             },
             roomOut(){
                 if (confirm("정말 나가시겠습니까?") == true){
                     this.isChating = false;
+                    this.chatList = [];
                     this.socket.emit('room-out', {id:this.socket.id, roomId:this.roomInUser[0].roomId });
                 }else{ 
                     return;
@@ -137,9 +137,10 @@ window.onload = function () {
         el:".mainMafia",
         mounted(){
             this.socket = socket;
-            this.socket.on('room-user', data => {this.roomInUser = data.roomInUser; this.host = data.host;});
-            this.socket.on('mafia-in-room', () =>{this.isMafia = true});
-            this.socket.on('chating-awesome', data=> {this.chatList.push(data); this.scroll();});
+            this.socket.on('room-user', data => {this.roomInUser = data.roomInUser;  this.host = data.host;});
+            this.socket.on('mafia-in-room', () =>{this.isMafia = true; this.idx = this.roomInUser.length;});
+            this.socket.on('mafia-awesome', data=> {this.chatList.push(data); this.scroll();});
+            this.socket.on('mafia-gamestart', data=>{this.gameStart = true; this.job = data.jobList[this.idx - 1]; this.jobList = data.jobList; this.cycle();});
         },
         data:{
             socket: null,
@@ -148,42 +149,162 @@ window.onload = function () {
             msg:'',
             chatList:[],
             host:'',
-            readyBtn:false
+            readyBtn:false,
+            gameStart:false,
+            idx:0,
+            job:'',
+            jobList:[],
+            guide:'게임 가이드 창입니다.',
+            page:0,
+            time:0,
+            overlap:true
         },
         methods:{
-            sendMsg(){
-                if (this.msg === "" || this.msg.length >= 500) return;
-                this.socket.emit('chating-msg', {msg:this.msg, roomId:this.roomInUser[0].roomId});
-                this.msg = "";
+            sendMsg(system){
+                switch(system){
+                    case null:
+                        if (this.msg === "" || this.msg.length >= 500) return;
+                        this.socket.emit('mafia-msg', {msg:this.msg, roomId:this.roomInUser[0].roomId,system:false});
+                        this.msg = "";
+                        break;
+                    default:
+                        if (this.msg === "" || this.msg.length >= 500) return;
+                        this.socket.emit('mafia-msg', {msg:this.msg, roomId:this.roomInUser[0].roomId,system:true});
+                        this.msg = "";
+                        break;
+                }
             },
             scroll() {
-                if(this.nickName === ""){
-                    return;
-                }else{
-                    if(this.isMafia === false) return;
-                    const msgBox = document.querySelector(".mainMafia .msgBoxM");
-                    let scrollInterval = setInterval(() => {
+                if(this.isMafia === false) return;
+                let masBox;
+                switch(this.gameStart){
+                    case false:
+                        msgBox = document.querySelector(".mainMafia .msgBoxM");
+                        break;
+                    case true:
+                        msgBox = document.querySelector(".mainMafia .playMsgBoxM");
+                        break; 
+                }
+                let scrollInterval = setInterval(() => {
                     msgBox.scrollTop = msgBox.scrollHeight;
                     clearInterval(scrollInterval);
                 }, 10);
-                }
             },
             roomOut(){
                 if (confirm("정말 나가시겠습니까?") == true){
                     this.isMafia = false;
+                    this.gameStart = false;
+                    this.page = 0;
+                    this.time = 0;
+                    this.chatList = [];
                     this.socket.emit('room-out', {id:this.socket.id, roomId:this.roomInUser[0].roomId });
+                    this.cycle(true);
                 }else{ 
                     return;
                 }
             },
-            gameStart(){
-                if(!this.roomInUser.length < 4){
+            gameStart2(){
+                if(this.roomInUser.length < 0){
                     alert("인원수가 적습니다."); 
                     return;
+                }else{
+                    let check = true;
+                    for(let i = 0; i < this.roomInUser.length; i++){
+                        if(this.roomInUser[i].id === this.host) i++;
+                        else if(!this.roomInUser[i].ready) check = false;
+                    }
+                    if(check){
+                        alert("게임을 시작합니다.");
+                        this.socket.emit('mafia-gamestart', {roomId:this.roomInUser[0].roomId});
+                    }else{
+                        alert("준비를 안한 유저가 있습니다.");
+                        return;
+                    }
                 } 
             },
             ready(){
-                this.socket.emit('ready', this.ready);
+                this.readyBtn = !this.readyBtn;
+                this.socket.emit('ready', this.readyBtn);
+            },
+            cycle(){
+                let pageCycle = setInterval(()=>{
+                    if(this.time !==0) this.time--;
+                    if(this.time === 0){
+                        switch(this.page){
+                            case 3:
+                                this.page = 1;
+                                clearInterval(pageCycle);
+                                this.cycle();
+                                break;
+                            case 4:
+                                break;
+                            case 5:
+                                break;
+                            default:
+                                this.page++;
+                                clearInterval(pageCycle);
+                                this.cycle();
+                                break;
+                        }
+                    }
+                }, 1000);
+
+                switch(this.page){
+                    case 0:
+                        this.time = 5;
+                        this.guide = '낮이 되었습니다. 당신의 직업은 '+this.job.jobName+'입니다.';
+                        break;
+                    case 1:
+                        this.time = 15;
+                        this.guide = '투표시간입니다. 의심되는 사람을 투표해주세요.';
+                        break;
+                    case 2:
+                        this.time = 5;
+                        this.overlap = true;
+                        this.guide = '밤이 되었습니다. '+this.job.jobMent;
+                        break;
+                    case 3:
+                        this.time = 5;
+                        this.overlap = true;
+                        this.guide = '낮이 되었습니다.';
+                        break;
+                    case 4:
+                        this.time = 5;
+                        this.guide = '시민의 승리입니다.';
+                        break;
+                    case 5:
+                        this.time = 5;
+                        this.guide = '마피아의 승리입니다.';
+                        break;
+                }
+            },
+            clickEvent(nickName){
+                switch(this.page){
+                    case 1:
+                        if(!this.overlap) return;
+                        if(this.roomInUser[this.idx - 1].nickName === nickName) return;
+                        for(let i = 0; i < this.roomInUser.length; i++){
+                            if(this.roomInUser[i].nickName === nickName){
+                                this.jobList[i].vote++;
+                            }
+                        }
+                        this.msg = nickName+"님 1표";
+                        this.sendMsg();
+                        this.overlap = false;
+                        break;
+                    case 2:
+                        break;
+                }
+            },
+            result(){
+                switch(this.page){
+                    case 2:
+                        let max = 0;
+                        for(let i = 0; i < this.jobList.length; i++){
+                            
+                        }
+                        break;
+                }
             }
         }
     })
