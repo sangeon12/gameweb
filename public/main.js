@@ -261,6 +261,7 @@ window.onload = function () {
                     case 2:
                         this.time = 5;
                         this.overlap = true;
+                        this.result();
                         this.guide = '밤이 되었습니다. '+this.job.jobMent;
                         break;
                     case 3:
@@ -300,9 +301,23 @@ window.onload = function () {
                 switch(this.page){
                     case 2:
                         let max = 0;
+                        let death = [];
                         for(let i = 0; i < this.jobList.length; i++){
-                            
+                            if(this.jobList[i].vote > max){
+                                max = this.jobList[i].vote;
+                                death = this.jobList[i];
+                            }else if(this.jobList[i].vote === max){
+                                max = 0;
+                                death = [];
+                            }
                         }
+                        this.death(death);
+                        break;
+                }
+            },
+            death(death){
+                switch(death){
+                    case !null:
                         break;
                 }
             }
