@@ -157,22 +157,14 @@ window.onload = function () {
             guide:'게임 가이드 창입니다.',
             page:0,
             time:0,
-            overlap:true
+            overlap:true,
+            deathList:[]
         },
         methods:{
             sendMsg(system){
-                switch(system){
-                    case null:
-                        if (this.msg === "" || this.msg.length >= 500) return;
-                        this.socket.emit('mafia-msg', {msg:this.msg, roomId:this.roomInUser[0].roomId,system:false});
-                        this.msg = "";
-                        break;
-                    default:
-                        if (this.msg === "" || this.msg.length >= 500) return;
-                        this.socket.emit('mafia-msg', {msg:this.msg, roomId:this.roomInUser[0].roomId,system:true});
-                        this.msg = "";
-                        break;
-                }
+                if (this.msg === "" || this.msg.length >= 500) return;
+                this.socket.emit('mafia-msg', {msg:this.msg, roomId:this.roomInUser[0].roomId,system:system});
+                this.msg = "";
             },
             scroll() {
                 if(this.isMafia === false) return;
@@ -290,7 +282,7 @@ window.onload = function () {
                             }
                         }
                         this.msg = nickName+"님 1표";
-                        this.sendMsg();
+                        this.sendMsg(true);
                         this.overlap = false;
                         break;
                     case 2:
@@ -305,19 +297,14 @@ window.onload = function () {
                         for(let i = 0; i < this.jobList.length; i++){
                             if(this.jobList[i].vote > max){
                                 max = this.jobList[i].vote;
-                                death = this.jobList[i];
+                                death = i;
                             }else if(this.jobList[i].vote === max){
                                 max = 0;
-                                death = [];
+                                death = -1;
                             }
                         }
-                        this.death(death);
-                        break;
-                }
-            },
-            death(death){
-                switch(death){
-                    case !null:
+                        this.deathList.push(death);
+                        console.log(this.deathList);
                         break;
                 }
             }

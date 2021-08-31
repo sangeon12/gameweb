@@ -223,9 +223,7 @@
                     <div class="mafiaPlayChating">
                         <div class="titleM">채팅창</div>
                         <div class="playMsgBoxM">
-                            <div class="msgWait" v-for="chat in chatList" v-if="!chat.nickName === 'system'" :class="{my:chat.id === socket.id}">
-                                {{chat.nickName}} : {{chat.msg}}</div>
-                            <div class="msgWait" v-for="chat in chatList" v-if="chat.nickName === 'system'" :class="{system:chat.nickName === 'system'}">
+                            <div class="msgWait" v-for="chat in chatList" :class="{my:chat.id === socket.id}">
                                 {{chat.nickName}} : {{chat.msg}}</div>
                         </div>
                         <div class="input">

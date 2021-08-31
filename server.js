@@ -106,7 +106,7 @@ io.on("connect", socket => {
             case true:
                 io.to(data.roomId).emit('mafia-awesome', {id:null, nickName:'ststem', msg:data.msg});
                 break;
-            case false:
+            default:
                 io.to(data.roomId).emit('mafia-awesome', {id:sendUser.id, nickName:sendUser.nickName, msg:data.msg});
                 break;
         }
