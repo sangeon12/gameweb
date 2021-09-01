@@ -34,8 +34,8 @@ let userList = []; //로그인한 유저들을 저장하는 배열
 let roomList = []; //방 목록
 let roomInUser = [];//방에 들어간 유저 목록
 let roomId = 0;
-let jobList = [{jobCode:0,jobName:'마피아',jobMent:'죽일 사람들 선택하여주세요.',life:true,vote:0},{jobCode:1,jobName:'경찰',jobMent:'조사할 사람을 선택하여주세요.',life:true,vote:0},
-{jobCode:2,jobName:'의사',jobMent:'살릴 사람을 선택하여주세요.',life:true,vote:0},{jobCode:3,jobName:'정치인',jobMent:'',life:true,vote:0}]; //직업 리스트
+let jobList = [{jobCode:0,jobName:'마피아',jobMent:'죽일 사람들 선택하여주세요.',life:true},{jobCode:1,jobName:'경찰',jobMent:'조사할 사람을 선택하여주세요.',life:true},
+{jobCode:2,jobName:'의사',jobMent:'살릴 사람을 선택하여주세요.',life:true},{jobCode:3,jobName:'정치인',jobMent:'',life:true}]; //직업 리스트
 io.on("connect", socket => {
     console.log(socket.id + "연결");
     
@@ -62,7 +62,7 @@ io.on("connect", socket => {
 
     socket.on('createRoom', data =>{
         roomList.push({roomName:data.roomName, roomPassword:data.roomPassword, selectGame:data.selectGame, max:data.max, user:data.user, nickName:data.nickName, id:data.id, roomId : roomId});
-        roomInUser.push({nickName:data.nickName, roomName:data.roomName, id:data.id, selectGame:data.selectGame, roomId:roomId, ready:data.ready});
+        roomInUser.push({nickName:data.nickName, roomName:data.roomName, id:data.id, selectGame:data.selectGame, roomId:roomId, ready:data.ready, vote:data.vote, check:data.check, death:data.death});
         socket.join(roomId);
         io.emit('view-room', roomList);
         let roomMax = roomList.find(x => x.roomId === roomId);
@@ -125,6 +125,10 @@ io.on("connect", socket => {
 
     socket.on('mafia-death', data=>{
         io.to(data.roomId).emit('mafia-death', {death:data.death});
+    });
+
+    socket.on('mafia-vote', data=>{
+        io.to(data.roomId).emit('mafia-vote', {nickName:data.nickName});
     });
 
     function roomUser(data){

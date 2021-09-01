@@ -33,7 +33,6 @@
                 <div class="wrapper" v-if="isLogin">
                     <div class="menu">
                         <button type="button" class="btn btn-primary" @click="room = !room">방만들기</button>
-                        <button type="button" class="btn btn-danger">방찾기</button>
                     </div>
     
                     <div class="myContainer">
@@ -50,16 +49,16 @@
                             <div class="roomList">
                                 <div class="room" v-for="room in roomList"
                                     @click="inRoom(room.roomPassword, room.roomName, room.selectGame, room.roomId)">
-                                    <div class="roomName">{{room.roomName}}({{room.roomId}})</div>
-                                    <div class="roomGame">{{room.selectGame}}</div>
-                                    <div class="roomUser">{{room.user}}/{{room.max}}</div>
+                                    <div class="roomName">방 제목 : {{room.roomName}}({{room.roomId}})</div>
+                                    <div class="roomGame">방 종류 : {{room.selectGame}}</div>
+                                    <div class="roomUser">방 인원 : {{room.user}}/{{room.max}}</div>
                                 </div>
                             </div>
                         </div>
     
                         <div class="profile">
                             <div class="title">내정보</div>
-                            <div class="my" v-for="my in userList" v-if="my.id === socket.id">{{my.nickName}}</div>
+                            <div class="my" v-for="my in userList" v-if="my.id === socket.id">닉네임 : {{my.nickName}}</div>
                         </div>
     
                         <div class="chat">
@@ -90,9 +89,6 @@
                         <select class="form-control" id="selectGame" aria-label="Default select example">
                             <option selected value="">게임 하나를 선택해주세요.</option>
                             <option value="chating">채팅방</option>
-                            <option value="ending">끝말잇기</option>
-                            <option value="ai">Computer VS player(끝말잇기)</option>
-                            <option value="mafia">마피아 게임</option>
                         </select>
                         <div class="moveBtn">
                             <button type="button" class="btn btn-warning" @click="createRoom">만들기</button>
@@ -123,7 +119,7 @@
                         <div class="profile">
                             <div class="title">방정보</div>
                             <div class="my" v-for="my in roomInUser" v-if="socket.id === my.id">
-                                {{my.nickName}}/{{my.roomName}}</div>
+                                방 ID : {{my.nickName}}/ 닉네임 : {{my.roomName}}</div>
                         </div>
                     </div>
 
@@ -206,11 +202,14 @@
                     <div class="titleM">유저리스트</div>
                     
                     <div class="mafiaInUserList">
-                        <div class="mafiaPlayUser" v-for="user in roomInUser" v-show="!user.check" v-on:click="clickEvent(user.nickName)">
+                        <div class="mafiaPlayUser" v-for="user in roomInUser" v-if="check" v-show="!user.check && !user.death" v-on:click="clickEvent(user.nickName)">
                             <i class="fas fa-user"></i>{{user.nickName}}
                         </div>
-                        <div class="mafiaPlayUser" v-for="user in roomInUser" v-show="user.check" v-on:click="clickEvent(user.nickName)">
+                        <div class="mafiaPlayUser" v-for="user in roomInUser" v-if="check" v-show="user.check && !user.death" v-on:click="clickEvent(user.nickName)">
                             <i class="fas fa-user"></i>{{user.nickName}}<i class="far fa-check-circle"></i>
+                        </div>
+                        <div class="mafiaPlayUser" v-for="user in roomInUser" v-show="user.death" v-on:click="clickEvent(user.nickName)">
+                            <i class="fas fa-user"></i>{{user.nickName}}<i class="fas fa-times">
                         </div>
                     </div>
                 </div>
@@ -221,7 +220,9 @@
                     <div class="guide">
                         <div class="titleM">가이드</div>
                         <div class="gameGuide">
-                            {{guide}}   남은시간 : {{time}}
+                            <div class="narration">{{guide}}</div>
+                            <div class="timeOff">{{time}}</div>
+                            <div class="guide-death">{{deathN}}</div>
                         </div>
                     </div>
 

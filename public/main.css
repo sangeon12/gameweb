@@ -168,7 +168,7 @@
     display: grid;
     grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
     grid-template-rows: 1fr 1fr 1fr 1fr 1fr;
-    grid-gap: 5px;
+    grid-gap: 10px;
     overflow-y: scroll;
     height: 43vh;
     -ms-overflow-style: none;
@@ -180,6 +180,7 @@
 
 .roomList > *{
     border: 1px solid #b4b4b4;
+    text-align: center;
 }
 
 .room{

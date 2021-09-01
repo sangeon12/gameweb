@@ -153,6 +153,15 @@
 .gameGuide{
     opacity: 0.5;
     color: white;
+    display: grid;
+    grid-template-columns: 9fr 1fr;
+    grid-template-rows: 1fr 1fr;
+}
+
+.guide-death{
+    color: red;
+    text-align: center;
+    margin-top: 8px;
 }
 
 .mafiaPlayChating{
