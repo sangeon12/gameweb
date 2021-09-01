@@ -85,6 +85,8 @@ window.onload = function () {
                         }else{ 
                             return;
                         }
+                    }else{
+                        alert("비밀번호가 틀렸습니다.");
                     }
                     return;
                 }else{
