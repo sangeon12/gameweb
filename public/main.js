@@ -63,7 +63,7 @@ window.onload = function () {
                     alert("방 이름 또는 게임을 선택해주세요.");
                     return;   
                 }
-                this.socket.emit('createRoom', {roomName:this.roomName, roomPassword:this.roomPassword, selectGame:selectGame, max:4, user:1, nickName:this.nickName, id:this.socket.id, ready:false});
+                this.socket.emit('createRoom', {roomName:this.roomName, roomPassword:this.roomPassword, selectGame:selectGame, max:4, user:1, nickName:this.nickName, id:this.socket.id, ready:false,check:false});
                 this.game = true;
                 this.room = false;
                 this.roomName = "";
@@ -79,7 +79,7 @@ window.onload = function () {
                         let room = this.roomList.find(x=> x.roomId === roomId);
                         if(room.user === room.max) alert("인원이 꽉찼습니다.");
                         else{
-                            this.socket.emit('room-in', {nickName:this.nickName, roomName:roomName, id:this.socket.id, selectGame:selectGame, roomId : roomId, ready:false});
+                            this.socket.emit('room-in', {nickName:this.nickName, roomName:roomName, id:this.socket.id, selectGame:selectGame, roomId : roomId, ready:false,check:false});
                             this.game = true;
                             this.chatList = [];
                         }   
@@ -138,9 +138,10 @@ window.onload = function () {
         mounted(){
             this.socket = socket;
             this.socket.on('room-user', data => {this.roomInUser = data.roomInUser;  this.host = data.host;});
-            this.socket.on('mafia-in-room', () =>{this.isMafia = true; this.idx = this.roomInUser.length;});
+            this.socket.on('mafia-in-room', () =>{this.isMafia = true; this.idx = this.roomInUser.length - 1;});
             this.socket.on('mafia-awesome', data=> {this.chatList.push(data); this.scroll();});
-            this.socket.on('mafia-gamestart', data=>{this.gameStart = true; this.job = data.jobList[this.idx - 1]; this.jobList = data.jobList; this.cycle();});
+            this.socket.on('mafia-gamestart', data=>{this.gameStart = true; this.job = data.jobList[this.idx]; this.jobList = data.jobList; this.cycle();});
+            this.socket.on('mafia-death', data=>{this.deathList.push(data.death);});
         },
         data:{
             socket: null,
@@ -158,12 +159,20 @@ window.onload = function () {
             page:0,
             time:0,
             overlap:true,
-            deathList:[]
+            deathList:[],
+            clickE:false
         },
         methods:{
             sendMsg(system){
+                let deathPerson = false;
                 if (this.msg === "" || this.msg.length >= 500) return;
-                this.socket.emit('mafia-msg', {msg:this.msg, roomId:this.roomInUser[0].roomId,system:system});
+                for(let i = 0; i < this.deathList.length; i++){
+                    if(this.deathList[i] === this.idx){
+                        deathPerson = true;
+                    }
+                }
+
+                if(!deathPerson) this.socket.emit('mafia-msg', {msg:this.msg, roomId:this.roomInUser[0].roomId,system:system});;
                 this.msg = "";
             },
             scroll() {
@@ -190,7 +199,7 @@ window.onload = function () {
                     this.time = 0;
                     this.chatList = [];
                     this.socket.emit('room-out', {id:this.socket.id, roomId:this.roomInUser[0].roomId });
-                    this.cycle(true);
+                    clearInterval(pageCycle);
                 }else{ 
                     return;
                 }
@@ -206,6 +215,7 @@ window.onload = function () {
                         else if(!this.roomInUser[i].ready) check = false;
                     }
                     if(check){
+                        this.chatList = [];
                         alert("게임을 시작합니다.");
                         this.socket.emit('mafia-gamestart', {roomId:this.roomInUser[0].roomId});
                     }else{
@@ -254,6 +264,7 @@ window.onload = function () {
                         this.time = 5;
                         this.overlap = true;
                         this.result();
+                        this.checkReset(false, null);
                         this.guide = '밤이 되었습니다. '+this.job.jobMent;
                         break;
                     case 3:
@@ -275,7 +286,7 @@ window.onload = function () {
                 switch(this.page){
                     case 1:
                         if(!this.overlap) return;
-                        if(this.roomInUser[this.idx - 1].nickName === nickName) return;
+                        if(this.roomInUser[this.idx].nickName === nickName) return;
                         for(let i = 0; i < this.roomInUser.length; i++){
                             if(this.roomInUser[i].nickName === nickName){
                                 this.jobList[i].vote++;
@@ -284,8 +295,10 @@ window.onload = function () {
                         this.msg = nickName+"님 1표";
                         this.sendMsg(true);
                         this.overlap = false;
+                        this.checkReset(true, nickName);
                         break;
                     case 2:
+                         
                         break;
                 }
             },
@@ -303,9 +316,29 @@ window.onload = function () {
                                 death = -1;
                             }
                         }
-                        this.deathList.push(death);
-                        console.log(this.deathList);
+                        if(death !== -1) this.socket.emit('mafia-death', {death:death, roomId:this.roomInUser[0].roomId});
+                        for(let i = 0; i < this.jobList.length; i++){
+                            this.jobList[i].vote = 0;
+                        }
+                        this.msg = this.roomInUser[death].nickName+'님이 처형당했습니다.';
+                        this.sendMsg(true);
                         break;
+                }
+            },
+            checkReset(h, nickName){
+                switch(h){
+                    case true:
+                        for(let i = 0; i < this.roomInUser.length; i++){
+                            if(this.roomInUser[i].nickName === nickName){
+                                this.roomInUser[i].check = true;
+                            }
+                        }
+                        break;
+                    case false:
+                        for(let i = 0; i < this.roomInUser.length; i++){
+                            this.roomInUser[i].check = false;
+                        }
+                        break
                 }
             }
         }

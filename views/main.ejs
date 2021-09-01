@@ -206,7 +206,12 @@
                     <div class="titleM">유저리스트</div>
                     
                     <div class="mafiaInUserList">
-                        <div class="mafiaPlayUser" v-for="user in roomInUser" v-on:click="clickEvent(user.nickName)"><i class="fas fa-user"></i>{{user.nickName}}</div>
+                        <div class="mafiaPlayUser" v-for="user in roomInUser" v-show="!user.check" v-on:click="clickEvent(user.nickName)">
+                            <i class="fas fa-user"></i>{{user.nickName}}
+                        </div>
+                        <div class="mafiaPlayUser" v-for="user in roomInUser" v-show="user.check" v-on:click="clickEvent(user.nickName)">
+                            <i class="fas fa-user"></i>{{user.nickName}}<i class="far fa-check-circle"></i>
+                        </div>
                     </div>
                 </div>
     

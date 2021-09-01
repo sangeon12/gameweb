@@ -123,6 +123,10 @@ io.on("connect", socket => {
         io.to(data.roomId).emit('mafia-gamestart', {jobList:jobList});
     });
 
+    socket.on('mafia-death', data=>{
+        io.to(data.roomId).emit('mafia-death', {death:data.death});
+    });
+
     function roomUser(data){
         let a = []; 
         let host = '';
